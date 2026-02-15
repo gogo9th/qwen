@@ -18,6 +18,11 @@ parser.add_argument(
     choices=["4", "16"],
     help="가중치 정밀도 비트 선택 (기본값: 4)"
 )
+parser.add_argument(
+    "--no-stream",
+    action="store_true",
+    help="스트리밍 출력 비활성화 (생성 완료 후 한꺼번에 출력)"
+)
 args = parser.parse_args()
 
 model_map = {
@@ -109,16 +114,24 @@ print("-" * 20)
 print(f"질문: {prompt}")
 print("답변: ", end="", flush=True)
 
-# 토큰이 생성될 때마다 즉시 터미널에 출력
-streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 start_time = time.perf_counter()
-outputs = model.generate(
-    **model_inputs,
-    max_new_tokens=512,  # 최대 출력 길이
-    temperature=0.7,     # 창의성 조절 (0.0 ~ 1.0)
-    top_p=0.9,           # 확률 분포 조절
-    streamer=streamer
-)
+if args.no_stream:
+    outputs = model.generate(
+        **model_inputs,
+        max_new_tokens=512,  # 최대 출력 길이
+        temperature=0.7,     # 창의성 조절 (0.0 ~ 1.0)
+        top_p=0.9,           # 확률 분포 조절
+    )
+else:
+    # 토큰이 생성될 때마다 즉시 터미널에 출력
+    streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
+    outputs = model.generate(
+        **model_inputs,
+        max_new_tokens=512,  # 최대 출력 길이
+        temperature=0.7,     # 창의성 조절 (0.0 ~ 1.0)
+        top_p=0.9,           # 확률 분포 조절
+        streamer=streamer
+    )
 end_time = time.perf_counter()
 
 input_token_count = model_inputs["input_ids"].shape[-1]
@@ -128,6 +141,11 @@ elapsed_time = end_time - start_time
 tokens_per_sec = (
     generated_token_count / elapsed_time if elapsed_time > 0 else float("inf")
 )
+
+if args.no_stream:
+    generated_ids = outputs[0, input_token_count:]
+    decoded_text = tokenizer.decode(generated_ids, skip_special_tokens=True)
+    print(decoded_text)
 
 # 5. 마무리 출력
 print()
