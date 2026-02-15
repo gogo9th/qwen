@@ -10,13 +10,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--param",
     default="0.6",
-    help="모델 크기 파라미터 (지원값: 0.6, 4, 8)"
+    help="모델 크기 파라미터: 0.6, 4, 8 (기본값: 0.6)"
 )
 parser.add_argument(
     "--bits",
     default="4",
     choices=["4", "16"],
-    help="가중치 정밀도 비트 선택 (기본값: 4)"
+    help="가중치 정밀도 비트 선택: 4, 16 (기본값: 4)"
 )
 parser.add_argument(
     "--no-stream",
